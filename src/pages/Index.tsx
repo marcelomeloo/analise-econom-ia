@@ -9,7 +9,7 @@ import CategorizationView from '@/components/CategorizationView';
 import InsightsView from '@/components/InsightsView';
 import GeneralAnalysisView from '@/components/GeneralAnalysisView';
 import { TransactionData, FinancialInsights, GeneralAnalysis } from '@/types/financial';
-import { analyzeCSVWithAI, getFileContent } from '@/services/openai';
+import { getFileContent, analyzeCSVWithAI } from '@/services/api-client';
 
 const Index = () => {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -35,18 +35,10 @@ const Index = () => {
       const fileContent = await getFileContent(file);
       console.log('File content length:', fileContent.length);
       
-      // Analyze with OpenAI with progress tracking
-      console.log('Analyzing with OpenAI...');
-      const analysisResult = await analyzeCSVWithAI(fileContent, {
-        onBatchStart: (current, total) => {
-          console.log(`Starting batch ${current}/${total}`);
-          setProcessingProgress({ current, total });
-        },
-        onBatchComplete: (current, total, result) => {
-          console.log(`Completed batch ${current}/${total}: ${result.length} transactions`);
-          setProcessingProgress({ current, total });
-        }
-      });
+      // Analyze with backend API
+      console.log('Analyzing with backend API...');
+      setProcessingProgress({ current: 1, total: 1 }); // Show indeterminate progress
+      const analysisResult = await analyzeCSVWithAI(fileContent);
       console.log('Analysis completed:', analysisResult);
       
       // Update state with AI-analyzed data
@@ -55,9 +47,9 @@ const Index = () => {
       setGeneralAnalysis(analysisResult.generalAnalysis);
       setAiSummary(analysisResult.summary);
       
-      console.log('Processing completed successfully with AI analysis');
+      console.log('Processing completed successfully with backend analysis');
     } catch (err) {
-      console.error('Error processing file with AI:', err);
+      console.error('Error processing file with backend:', err);
       setError(err instanceof Error ? err.message : 'Erro ao processar arquivo com IA');
     } finally {
       setIsProcessing(false);
