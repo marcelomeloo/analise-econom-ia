@@ -20,7 +20,7 @@ This guide explains how to set up OpenAI integration for intelligent financial a
 2. **Add your OpenAI API key:**
    ```bash
    # .env.local
-   VITE_OPENAI_API_KEY=sk-your-actual-api-key-here
+   OPENAI_API_KEY=sk-your-actual-api-key-here
    ```
 
    ⚠️ **Security Note**: Never commit your actual API key to version control!

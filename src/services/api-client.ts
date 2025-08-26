@@ -6,9 +6,7 @@ class APIClient {
 
   constructor() {
     // Auto-detect API URL based on environment
-    this.baseURL = process.env.NODE_ENV === 'production' 
-      ? '/api'  // In production, use relative path (same domain)
-      : 'http://localhost:8080/api';  // In development, use local server
+    this.baseURL = '/api';  // Always use relative path - Vercel handles dev and prod
   }
 
   /**

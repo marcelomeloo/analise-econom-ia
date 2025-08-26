@@ -36,7 +36,7 @@ An intelligent financial analysis assistant that uses OpenAI to automatically ca
    
    Edit `.env.local` and add your OpenAI API key:
    ```
-   VITE_OPENAI_API_KEY=sk-your-api-key-here
+   OPENAI_API_KEY=sk-your-api-key-here
    ```
 
 3. **Start the development server:**
