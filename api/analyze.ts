@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { analyzeCSVWithAI } from './services/financial-analyzer';
 
 /**
  * CSV Analysis endpoint
@@ -40,10 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   console.log('📊 Analysis request received, CSV size:', req.body.csvContent.length, 'characters');
 
   try {
-    // Import the analysis service
-    const { analyzeCSVWithAI } = await import('./services/financial-analyzer');
-    
-    // Process the CSV
+    // Process the CSV using imported service
     console.log('🚀 Starting CSV analysis...');
     const result = await analyzeCSVWithAI(req.body.csvContent);
     
