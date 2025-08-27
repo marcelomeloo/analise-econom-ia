@@ -37,8 +37,18 @@ const Index = () => {
       
       // Analyze with backend API
       console.log('Analyzing with backend API...');
-      setProcessingProgress({ current: 1, total: 1 }); // Show indeterminate progress
-      const analysisResult = await analyzeCSVWithAI(fileContent);
+      setProcessingProgress({ current: 0, total: 1 }); // Initialize progress
+      
+      const analysisResult = await analyzeCSVWithAI(fileContent, {
+        onBatchStart: (batchNumber: number, totalBatches: number) => {
+          console.log(`Starting batch ${batchNumber} of ${totalBatches}`);
+          setProcessingProgress({ current: batchNumber - 1, total: totalBatches });
+        },
+        onBatchComplete: (batchNumber: number, totalBatches: number) => {
+          console.log(`Completed batch ${batchNumber} of ${totalBatches}`);
+          setProcessingProgress({ current: batchNumber, total: totalBatches });
+        }
+      });
       console.log('Analysis completed:', analysisResult);
       
       // Update state with AI-analyzed data

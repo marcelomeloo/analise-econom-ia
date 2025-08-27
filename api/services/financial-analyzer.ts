@@ -568,6 +568,12 @@ export const analyzeCSVWithAI = async (
         
         console.log(`✅ Batch ${i + 1} classified: ${batchResult.transactions.length} transactions`);
         
+        // Convert raw transactions to structured data for this batch
+        const batchTransactions = convertToTransactionData(batchResult.transactions);
+        
+        // Notify batch completion
+        progressCallback?.onBatchComplete?.(i + 1, batches.length, batchTransactions);
+        
         // Small delay to avoid rate limiting
         if (i < batches.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 500));

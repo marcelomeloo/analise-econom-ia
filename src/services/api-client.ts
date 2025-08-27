@@ -53,6 +53,92 @@ class APIClient {
     console.log('✅ Analysis completed by backend');
     return result.data;
   }
+
+  /**
+   * Analyze CSV content with real-time progress using Server-Sent Events
+   */
+  async analyzeCSVWithProgress(csvContent: string, progressCallback?: ProgressCallback): Promise<CSVAnalysisResult> {
+    console.log('📡 Starting CSV analysis with progress streaming...');
+    
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Start the streaming request
+        const response = await fetch(`${this.baseURL}/analyze-stream`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'text/event-stream',
+          },
+          body: JSON.stringify({
+            csvContent: csvContent
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Streaming request failed: ${response.status} ${response.statusText}`);
+        }
+
+        if (!response.body) {
+          throw new Error('No response body for streaming');
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+              break;
+            }
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || ''; // Keep the last incomplete line
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+              
+              if (line.startsWith('event: ')) {
+                const eventType = line.substring(7).trim();
+                continue;
+              }
+              
+              if (line.startsWith('data: ')) {
+                const data = JSON.parse(line.substring(6));
+                
+                // Handle different event types based on the data structure
+                if (data.message?.includes('Starting CSV analysis')) {
+                  console.log('🚀 Analysis started:', data.message);
+                } else if (data.current && data.total && data.message?.includes('Processing batch')) {
+                  console.log(`📦 Batch ${data.current}/${data.total} started`);
+                  progressCallback?.onBatchStart?.(data.current, data.total);
+                } else if (data.current && data.total && data.batchTransactions !== undefined) {
+                  console.log(`✅ Batch ${data.current}/${data.total} completed`);
+                  progressCallback?.onBatchComplete?.(data.current, data.total, []);
+                } else if (data.success === true && data.data) {
+                  console.log('✅ Analysis completed successfully');
+                  resolve(data.data);
+                  return;
+                } else if (data.success === false) {
+                  console.error('❌ Analysis error:', data.message);
+                  reject(new Error(data.message || 'Analysis failed'));
+                  return;
+                }
+              }
+            }
+          }
+        } finally {
+          reader.releaseLock();
+        }
+      } catch (error) {
+        console.error('❌ Streaming analysis error:', error);
+        reject(new Error(`Streaming analysis failed: ${error instanceof Error ? error.message : 'Unknown error'}`));
+      }
+    });
+  }
 }
 
 // Types matching the backend response structure
@@ -128,5 +214,5 @@ export const analyzeCSVWithAI = async (
   csvContent: string, 
   progressCallback?: ProgressCallback
 ): Promise<CSVAnalysisResult> => {
-  return apiClient.analyzeCSV(csvContent, progressCallback);
+  return apiClient.analyzeCSVWithProgress(csvContent, progressCallback);
 };
